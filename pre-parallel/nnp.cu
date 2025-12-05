@@ -71,6 +71,10 @@ void init_weights(float *w, int size) {
 *   None
 */
 void train_model(MODEL* model){
+    init_weights(model->W1, SIZE*H1); init_weights(model->b1, H1);
+    init_weights(model->W2, H1*H2); init_weights(model->b2, H2);
+    init_weights(model->W3, H2*CLASSES); init_weights(model->b3, CLASSES);
+
     // Allocate GPU memory for weights, biases, intermediate activations, deltas
     float *d_W1, *d_W2, *d_W3;
     float *d_b1, *d_b2, *d_b3;
@@ -98,17 +102,19 @@ void train_model(MODEL* model){
     cudaMalloc(&d_delta2, H2*sizeof(float));
     cudaMalloc(&d_delta3, CLASSES*sizeof(float));
 
+    float* d_x;
+    cudaMalloc(&d_x, SIZE*sizeof(float));
+
     // Thread/block setup
     int threads = 256;
 
     for(int epoch=0; epoch<EPOCHS; epoch++){
-        float loss = 0.0;
+        float loss = 0.0f;
 
         for(int n=0; n<NUM_TRAIN; n++){
             // Copy input to GPU
-            float* d_x;
-            cudaMalloc(&d_x, SIZE*sizeof(float));
-            cudaMemcpy(d_x, train_data[n], SIZE*sizeof(float), cudaMemcpyHostToDevice);
+            //cudaMemcpy(d_x, train_data[n], SIZE*sizeof(float), cudaMemcpyHostToDevice);
+	    cudaMemcpy(d_x, &train_data[n][0], SIZE * sizeof(float), cudaMemcpyHostToDevice);
 
             // --- Forward pass ---
             int blocks1 = (H1 + threads - 1)/threads;
@@ -159,8 +165,8 @@ void train_model(MODEL* model){
 
             cudaFree(d_x);
         }
-        printf("Epoch %d, Loss=%.4f\n", epoch, loss/NUM_TRAIN);
 
+        printf("Epoch %d, Loss=%.4f\n", epoch, loss/NUM_TRAIN);
     }
 
     // Copy updated weights & biases back to CPU
@@ -177,7 +183,6 @@ void train_model(MODEL* model){
     cudaFree(d_h1); cudaFree(d_h2); cudaFree(d_out);
     cudaFree(d_delta1); cudaFree(d_delta2); cudaFree(d_delta3);
 }
-
 
 
 /* Save the trained model to a binary file

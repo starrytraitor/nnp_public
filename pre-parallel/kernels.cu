@@ -1,93 +1,19 @@
 #include "kernels.h"
-/* kernels.cu
- *
- *  Created on: Nov 9, 2025
- *  
- *  Location for CUDA kernels  kernels should be defined here, and prototypes placed in kernels.h
- *
- *  Example:
- *     __global__ void test_kernel(){}
- */
-
-
-/*
-__global__ void layer1_kernel(float* w1, float* x, float* b1, float* h1a){
-    int j = blockIdx.x * blockDim.x + threadIdx.x; // neuron index
-    if (j >= H1) return;
-
-    float sum = b1[j];
-
-    // matches: model->W1[i*H1 + j]
-    for (int i = 0; i < SIZE; i++)
-        sum += x[i] * w1[i * H1 + j];
-
-
-    h1a[j] = sum > 0 ? sum : 0;
-}
-*/
-
-
-/*
-__global__ void matMul_forward(
-    const float* w1,  // SIZE * H1
-    const float* w2,  // H1 * H2
-    const float* w3,  // H2 * CLASSES
-    const float* b1,  // H1
-    const float* b2,  // H2
-    const float* b3,  // CLASSES
-    const float* x,   // SIZE
-    float* out        // CLASSES output
-) {
-    extern __shared__ float shmem[];
-
-    float* h1_a = shmem;           // size H1
-    float* h2_a = &shmem[H1];      // size H2
-
-    int tid = threadIdx.x;
-
-    // --- Step 1: compute h1a[j] for j < H1 ---
-    if (tid < H1) {
-        float sum = b1[tid];
-        for (int i = 0; i < SIZE; i++) {
-            sum += x[i] * w1[i * H1 + tid];
-        }
-        h1_a[tid] = sum > 0 ? sum : 0;
-    }
-    __syncthreads();
-
-    // --- Step 2: compute h2a[j] for j < H2 ---
-    if (tid < H2) {
-        float sum = b2[tid];
-        for (int i = 0; i < H1; i++) {
-            sum += h1_a[i] * w2[i * H2 + tid];
-        }
-        h2_a[tid] = sum > 0 ? sum : 0;
-    }
-    __syncthreads();
-
-    // --- Step 3: compute out[k] for k < CLASSES ---
-    if (tid < CLASSES) {
-        float sum = b3[tid];
-        for (int j = 0; j < H2; j++) {
-            sum += h2_a[j] * w3[j * CLASSES + tid];
-        }
-        out[tid] = sum;   // no relu on final layer
-    }
-}
-*/
-
+#include <stdio.h>
 
 __global__ void forward_layer(
-    const float* __restrict__ W,  // weight matrix [in_size * out_size]
-    const float* __restrict__ x,  // input vector [in_size]
-    const float* __restrict__ b,  // bias vector [out_size]
-    float* __restrict__ h,        // output vector [out_size]
+    const float*  W,  // weight matrix [in_size * out_size]
+    const float* x,  // input vector [in_size]
+    const float* b,  // bias vector [out_size]
+    float* h,        // output vector [out_size]
     int in_size,
     int out_size
 ){
     int j = blockIdx.x * blockDim.x + threadIdx.x;
+    //printf("%.4f", in_size);
     if(j < out_size){
         float sum = b[j];
+	//printf("%.4f", b[j]);
         for(int i = 0; i < in_size; i++){
             sum += x[i] * W[i*out_size + j];
         }
@@ -144,4 +70,5 @@ __global__ void update_bias(float* b, const float* delta, float lr, int size){
         b[idx] += lr * delta[idx];
     }
 }
+
 

@@ -7,3 +7,4 @@ __global__ void compute_delta(const float*, const float*, const float*, float*, 
 __global__ void update_weights(float*, const float*, const float*, float, int, int);
 __global__ void update_bias(float*, const float*, float, int);
 
+
