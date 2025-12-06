@@ -1,0 +1,12 @@
+Script started on Fri Dec  5 19:24:09 2025
+]0;ssszhang@:~/nnp_public/pre-parallel[?1034h[ssszhang@r2v00 pre-parallel]$ srun nnp train
+Epoch 0, Loss=2.3044
+Epoch 1, Loss=2.3043
+Epoch 2, Loss=2.3043
+Epoch 3, Loss=2.3043
+Epoch 4, Loss=2.3043
+Trained model in 33 seconds
+]0;ssszhang@:~/nnp_public/pre-parallel[ssszhang@r2v00 pre-parallel]$ exit
+exit
+
+Script done on Fri Dec  5 19:24:59 2025
