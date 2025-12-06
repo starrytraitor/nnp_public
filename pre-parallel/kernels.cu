@@ -1,11 +1,11 @@
 #include "kernels.h"
 #include <stdio.h>
 
-__global__ void forward_layer(
-    const float*  W,  // weight matrix [in_size * out_size]
-    const float* x,  // input vector [in_size]
-    const float* b,  // bias vector [out_size]
-    float* h,        // output vector [out_size]
+__global__ void matMul_forward(
+    const float*  W,  // weights matrix
+    const float* x,  // input vector
+    const float* b,  // bias vector
+    float* h,        // output vector
     int in_size,
     int out_size
 ){
@@ -21,17 +21,17 @@ __global__ void forward_layer(
     }
 }
 
-__global__ void relu_layer(float* h, int size){
+__global__ void relu_k(float* h, int size){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     if(idx < size) h[idx] = h[idx] > 0 ? h[idx] : 0.0f;
 }
 
 
 __global__ void compute_delta(
-    const float* __restrict__ W,      // weight matrix of next layer [in_size*out_size]
-    const float* __restrict__ delta_next, // delta of next layer [out_size]
-    const float* __restrict__ h,      // activation of current layer [in_size]
-    float* __restrict__ delta,        // output delta [in_size]
+    const float* W,      // weight matrix
+    const float* delta_next, // delta of next layer
+    const float* h,      // activation of current layer
+    float* delta,        // output delta
     int in_size,
     int out_size
 ){
@@ -41,15 +41,15 @@ __global__ void compute_delta(
         for(int k=0; k<out_size; k++){
             sum += delta_next[k] * W[j*out_size + k];
         }
-        delta[j] = (h[j] > 0 ? 1.0f : 0.0f) * sum;  // ReLU derivative
+        delta[j] = (h[j] > 0 ? 1.0f : 0.0f) * sum;  // drelu without the drelu
     }
 }
 
 
 __global__ void update_weights(
-    float* __restrict__ W,
-    const float* __restrict__ delta,
-    const float* __restrict__ h_prev,
+    float* W,
+    const float* delta,
+    const float* h_prev,
     float lr,
     int in_size,
     int out_size
